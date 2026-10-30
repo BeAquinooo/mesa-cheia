@@ -1,0 +1,34 @@
+# dependências
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# builds nativos e credenciais de assinatura
+/android
+/ios
+*.apk
+*.aab
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+
+# variáveis de ambiente (nunca enviar segredos; manter apenas .env.example)
+.env
+.env.*
+!.env.example
+
+# logs e sistema
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.metro-health-check*
+.DS_Store
+*.tsbuildinfo
