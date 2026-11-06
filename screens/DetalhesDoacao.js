@@ -1,7 +1,10 @@
+import { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Botao, Cartao, Pagina, Selo, estilos } from '../components/ui.js';
+import { Botao, Carregando, Cartao, Erro, Pagina, Selo, estilos } from '../components/ui.js';
 import { cores } from '../constants/tema.js';
-import { buscarDoacao } from '../data/doacoes.js';
+import useCarregar from '../hooks/useCarregar.js';
+import { buscarDoacao } from '../services/api.js';
+import { formatarData, formatarRetirada } from '../utils/formatar.js';
 
 function Linha({ rotulo, valor }) {
   return (
@@ -13,13 +16,16 @@ function Linha({ rotulo, valor }) {
 }
 
 export default function DetalhesDoacao({ route, navigation }) {
-  const doacao = buscarDoacao(route.params?.id);
+  const id = route.params?.id;
+  const buscar = useCallback(function buscarDestaDoacao() { return buscarDoacao(id); }, [id]);
+  const { dados: doacao, erro, carregando, recarregar } = useCarregar(buscar);
 
-  if (!doacao) {
+  if (carregando && !doacao) { return <Carregando mensagem="Carregando doação…" />; }
+  if (erro) {
     return (
       <Pagina>
-        <Text style={estilos.titulo}>Doação não encontrada</Text>
-        <Botao titulo="Voltar" onPress={function voltar() { navigation.goBack(); }} />
+        <Erro mensagem={erro} aoTentar={recarregar} />
+        <Botao titulo="Voltar" variante="secundario" onPress={function voltar() { navigation.goBack(); }} />
       </Pagina>
     );
   }
@@ -29,14 +35,15 @@ export default function DetalhesDoacao({ route, navigation }) {
       <Selo texto={doacao.categoria} />
       <Text style={estilos.titulo}>{doacao.titulo}</Text>
       <Text style={estilos.subtitulo}>{doacao.doador}</Text>
-      <Text style={estilos.texto}>{doacao.descricao}</Text>
+      {doacao.descricao ? <Text style={estilos.texto}>{doacao.descricao}</Text> : null}
 
       <Cartao>
         <Linha rotulo="Quantidade" valor={doacao.quantidade} />
         <Linha rotulo="Rende cerca de" valor={doacao.refeicoes + ' refeições'} />
-        <Linha rotulo="Validade" valor={doacao.validade} />
-        <Linha rotulo="Local" valor={doacao.local} />
-        <Linha rotulo="Retirada" valor={doacao.retirada} />
+        <Linha rotulo="Validade" valor={formatarData(doacao.validade)} />
+        <Linha rotulo="Local" valor={doacao.local_retirada} />
+        <Linha rotulo="Retirada" valor={formatarRetirada(doacao.retirada_inicio, doacao.retirada_fim)} />
+        <Linha rotulo="Situação" valor={doacao.status} />
       </Cartao>
 
       {/* Reservar será implementado na Entrega 3, junto com login e níveis de usuário. */}

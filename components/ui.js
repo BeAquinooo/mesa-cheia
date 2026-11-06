@@ -1,5 +1,5 @@
 // Componentes visuais reutilizados pelas telas.
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { cores, raio } from '../constants/tema.js';
 
 export function Pagina({ children }) {
@@ -44,6 +44,35 @@ export function Selo({ texto, destaque = false }) {
   );
 }
 
+export function Carregando({ mensagem = 'Carregando…' }) {
+  return (
+    <View style={estilos.centro}>
+      <ActivityIndicator size="large" color={cores.verde} />
+      <Text style={estilos.textoSuave}>{mensagem}</Text>
+    </View>
+  );
+}
+
+// Mostra o erro vindo da API e permite tentar de novo.
+export function Erro({ mensagem, aoTentar }) {
+  return (
+    <View style={estilos.erroCaixa}>
+      <Text style={estilos.erroTexto}>{mensagem}</Text>
+      {aoTentar && <Botao titulo="Tentar novamente" variante="secundario" onPress={aoTentar} />}
+    </View>
+  );
+}
+
+export function Campo({ rotulo, dica, ...props }) {
+  return (
+    <View style={estilos.campo}>
+      <Text style={estilos.campoRotulo}>{rotulo}</Text>
+      <TextInput style={estilos.campoInput} placeholderTextColor={cores.textoSuave} {...props} />
+      {dica ? <Text style={estilos.textoSuave}>{dica}</Text> : null}
+    </View>
+  );
+}
+
 export function Marca({ tamanho = 28 }) {
   // Marca provisória em texto: prato (círculo) + nome.
   return (
@@ -82,6 +111,15 @@ export const estilos = StyleSheet.create({
   seloTexto: { color: cores.verdeEscuro, fontSize: 12, fontWeight: '700' },
   seloDestaque: { backgroundColor: cores.laranjaClaro },
   seloTextoDestaque: { color: '#9A4B10' },
+  centro: { alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32 },
+  erroCaixa: { backgroundColor: '#FDECEA', borderRadius: 12, padding: 14, gap: 12 },
+  erroTexto: { color: cores.erro, fontSize: 14, lineHeight: 20 },
+  campo: { gap: 6 },
+  campoRotulo: { fontSize: 14, fontWeight: '700', color: cores.texto },
+  campoInput: {
+    backgroundColor: cores.papel, borderWidth: 1, borderColor: cores.borda, borderRadius: 12,
+    paddingVertical: 12, paddingHorizontal: 14, fontSize: 16, color: cores.texto,
+  },
   marca: { alignItems: 'center' },
   prato: { backgroundColor: cores.verde, alignItems: 'center', justifyContent: 'center' },
   pratoMiolo: { backgroundColor: cores.fundo, borderWidth: 4, borderColor: cores.laranja },
