@@ -2,10 +2,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Botao, Cartao, Erro, Pagina, estilos } from '../components/ui.js';
 import { cores } from '../constants/tema.js';
 import useCarregar from '../hooks/useCarregar.js';
-import { listarDoacoes } from '../services/api.js';
+import { listarDoacoes, carregarSessao, encerrarSessao } from '../services/api.js';
+import { useEffect, useState } from 'react';
 
 export default function Inicio({ navigation }) {
   const { dados, erro, carregando, recarregar } = useCarregar(listarDoacoes);
+  const [sessao, setSessao] = useState(null);
+  useEffect(() => { carregarSessao().then(setSessao); }, []);
+  async function sair() { await encerrarSessao(); navigation.reset({ index: 0, routes: [{ name: 'BoasVindas' }] }); }
 
   // Enquanto não há resposta da API, mostramos "…" no lugar dos números.
   const totalDoacoes = dados ? String(dados.length) : '…';
@@ -16,7 +20,9 @@ export default function Inicio({ navigation }) {
   return (
     <Pagina>
       <Text style={estilos.titulo}>Olá! 👋</Text>
-      <Text style={estilos.subtitulo}>Veja o que está disponível para doação perto de você.</Text>
+      <Text style={estilos.subtitulo}>Olá, {sessao?.usuario?.nome || 'usuário'}! Veja o que está disponível.</Text>
+      <Text style={estilos.textoSuave}>Perfil: {sessao?.usuario?.nivel || 'carregando'}</Text>
+      <Botao titulo="Sair da conta" variante="secundario" onPress={sair} />
 
       {erro ? <Erro mensagem={erro} aoTentar={recarregar} /> : null}
 
@@ -41,10 +47,11 @@ export default function Inicio({ navigation }) {
       <Cartao>
         <Text style={estilos.secao}>Tem comida sobrando?</Text>
         <Text style={estilos.textoSuave}>Publique uma doação para que instituições possam reservar.</Text>
-        <Botao titulo="Publicar doação" variante="secundario"
-          onPress={function irNova() { navigation.navigate('NovaDoacao'); }} />
+        {sessao?.usuario?.nivel === 'doador' || sessao?.usuario?.nivel === 'admin' ?
+          <Botao titulo="Publicar doação" variante="secundario" onPress={function irNova() { navigation.navigate('NovaDoacao'); }} /> : null}
       </Cartao>
 
+      {sessao?.usuario?.nivel === 'admin' ? <Cartao><Text style={estilos.secao}>Administração</Text><Botao titulo="Gerenciar usuários" onPress={()=>navigation.navigate('GerenciarUsuarios')}/></Cartao> : null}
       <Cartao>
         <Text style={estilos.secao}>Como funciona</Text>
         <Text style={estilos.textoSuave}>Entenda o caminho de uma doação, da oferta à retirada.</Text>

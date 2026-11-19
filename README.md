@@ -2,131 +2,127 @@
 
 > Comida que sobra aqui, mesa cheia ali.
 
-Aplicativo mobile que conecta **quem tem alimento sobrando** (restaurantes, padarias, mercados, feirantes) a **quem pode aproveitá-lo** (ONGs, cozinhas comunitárias, abrigos), reduzindo o desperdício e ajudando a combater a fome.
+Aplicativo mobile para conectar doadores de alimentos (restaurantes, padarias, mercados e feirantes) a instituições comunitárias, reduzindo o desperdício e facilitando o acesso a alimentos.
 
-Projeto avaliativo: *Aplicação Mobile com JWT e Níveis de Usuário*, desenvolvido em 4 entregas.
+## Tecnologias
+- React Native com Expo e React Navigation
+- API REST com Node.js e Express
+- MySQL com `mysql2`
+- Autenticação JWT (Bearer Token) e hash de senha com `bcryptjs`
+- AsyncStorage para manter a sessão no aplicativo
 
-## Documentação
+## Estrutura
+- `screens/`: telas do aplicativo, incluindo login, cadastro, doações, edição e gestão de usuários
+- `services/api.js`: integração `fetch()` com a API e armazenamento da sessão
+- `backend/routes/`: rotas HTTP
+- `backend/controllers/`: regras e consultas
+- `backend/middleware/auth.js`: validação JWT e níveis de acesso
+- `database/mesa_cheia.sql`: estrutura e dados de demonstração
+- `docs/`: proposta, entregas e roteiro de apresentação
 
-| Documento | Conteúdo |
-|---|---|
-| [`docs/PROPOSTA.md`](docs/PROPOSTA.md) | Entrega 1: problema, público, justificativa, solução, usuários, telas e fluxo |
-| [`docs/ENTREGA_2.md`](docs/ENTREGA_2.md) | Entrega 2: requisitos, banco de dados (ER e dicionário), rotas da API e permissões |
-| [`database/mesa_cheia.sql`](database/mesa_cheia.sql) | Script MySQL: tabelas e dados de exemplo |
+## Requisitos
+Node.js 20+, MySQL 8+, npm e Expo Go ou emulador Android.
 
-## Status das entregas
+## Como configurar
 
-| Entrega | Conteúdo | Status |
-|---|---|---|
-| 1 | Proposta e estrutura inicial (Expo, navegação, telas) | ✅ |
-| 2 | Modelagem, MySQL, API Express e primeira integração com `fetch()` | ✅ Esta versão |
-| 3 | Cadastro, login, hash, JWT, níveis, rotas protegidas e CRUD completo | ⏳ |
-| 4 | Testes, APK final e apresentação | ⏳ |
-
-## O que existe até a Entrega 2
-
-- App **React Native (Expo)** com **React Navigation**: 7 telas
-- **API REST** em Node.js + Express, organizada em rotas, controllers e conexão com o banco
-- Banco **MySQL** com 4 tabelas: `usuarios`, `categorias`, `doacoes`, `reservas`
-- Integração `React Native → fetch() → API → MySQL` para a entidade principal:
-  - `GET /doacoes`, `GET /doacoes/:id`, `GET /categorias`
-  - `POST /doacoes` (tela **Publicar doação**)
-- Validação de entrada no servidor, consultas SQL parametrizadas e mensagens de erro sem detalhes internos
-- O app mostra carregamento e erro quando a API está fora do ar
-
-**Ainda não existe** (Entrega 3): login, JWT e permissões. A tela **Entrar** é só visual, e as rotas da API ainda estão abertas.
-
-## Estrutura de pastas
-
-```
-mesa-cheia/
-├── App.js, index.js, app.json
-├── assets/                     # ícones e splash
-├── components/ui.js            # Botao, Cartao, Selo, Campo, Carregando, Erro...
-├── constants/tema.js           # cores, nome e slogan
-├── hooks/useCarregar.js        # busca na API ao abrir/voltar para a tela
-├── navigation/AppNavigator.js
-├── screens/                    # telas do app
-├── services/api.js             # chamadas fetch() à API
-├── utils/formatar.js           # datas e rótulos
-├── tests/                      # testes do app
-├── backend/
-│   ├── server.js, app.js
-│   ├── config/ambiente.js      # lê e valida backend/.env
-│   ├── database/conexao.js     # pool MySQL
-│   ├── routes/                 # URLs → controllers
-│   ├── controllers/            # regras de cada rota + SQL
-│   ├── utils/validacoes.js
-│   ├── tests/                  # testes da API
-│   └── .env.example
-├── database/mesa_cheia.sql
-└── docs/
-```
-
-## Como executar
-
-Requisitos: Node.js 20+, MySQL 8+ e o app **Expo Go** (ou um emulador Android).
-
-**1. Banco de dados**
+### 1. Banco de dados
+Execute na pasta do projeto:
 
 ```bash
 mysql -u root -p < database/mesa_cheia.sql
 ```
 
-**2. API**
-
+### 2. API
 ```bash
 npm install
-cp backend/.env.example backend/.env   # preencha DB_PASSWORD (e o que mais for diferente)
+```
+Copie `backend/.env.example` para `backend/.env` e informe as credenciais do seu MySQL. Defina `JWT_SECRET` com uma chave aleatória longa (mínimo de 32 caracteres). Não compartilhe nem envie o `.env` ao Git.
+
+Inicie:
+```bash
 npm run api
 ```
+A API estará em `http://localhost:3000`. O servidor deve mostrar a confirmação de conexão com o MySQL.
 
-Deve aparecer `Conectado ao MySQL`. Teste em `http://localhost:3000/doacoes`.
-
-**3. Aplicativo**
+### 3. Aplicativo
+Emulador Android: o padrão é `http://10.0.2.2:3000`.
+Celular físico: crie `.env` na raiz a partir de `.env.example` e substitua o IP pelo endereço local do computador. Celular e computador devem estar na mesma rede.
 
 ```bash
-npx expo start
+npx expo start -c
 ```
 
-Escaneie o QR code com o Expo Go ou pressione `a` (emulador Android) / `w` (navegador).
+## Funcionalidades
 
-O app encontra a API assim:
+### Conta e sessão
+- Cadastro de doador ou instituição.
+- Senha armazenada somente como hash bcrypt (12 rounds).
+- Login valida credenciais e retorna JWT com validade de 8 horas.
+- O aplicativo mantém token e dados mínimos da sessão no AsyncStorage.
+- Requisições autenticadas enviam `Authorization: Bearer <token>`.
+- Logout remove a sessão local.
 
-| Onde o app roda | Endereço usado |
-|---|---|
-| Emulador Android | `http://10.0.2.2:3000` (padrão) |
-| Navegador / simulador iOS | `http://localhost:3000` (padrão) |
-| Celular com Expo Go | Crie `.env` na raiz com `EXPO_PUBLIC_API_URL=http://IP_DO_PC:3000` (mesma rede Wi-Fi) |
+### Níveis e permissões
+| Ação | Doador | Instituição | Admin |
+|---|:---:|:---:|:---:|
+| Listar e consultar doações | Sim | Sim | Sim |
+| Publicar doação | Sim | Não | Sim |
+| Editar/cancelar oferta | Própria | Não | Todas |
+| Reservar doação | Não | Sim | Não |
+| Consultar reservas próprias | Não | Sim | Todas |
+| Listar usuários e alterar níveis | Não | Não | Sim |
 
-Veja `.env.example`. Depois de mudar o `.env`, reinicie o Expo (`npx expo start -c`).
+As permissões são verificadas no back-end. A interface esconder botões não substitui a proteção das rotas.
+
+**Importante:** por segurança, o cadastro público não permite criar conta de administrador. Para promover a primeira conta a admin em um banco local controlado, cadastre-a pelo app e execute `UPDATE usuarios SET nivel = 'admin' WHERE email = 'SEU_EMAIL';` no MySQL. Depois entre novamente no aplicativo para receber um token com o novo nível. Os usuários demonstrativos antigos do SQL têm hashes fictícios e não conseguem entrar; cadastre novas contas pelo aplicativo.
+
+### Rotas principais
+| Método | Rota | Acesso |
+|---|---|---|
+| POST | `/auth/cadastro` | Público |
+| POST | `/auth/login` | Público |
+| GET | `/categorias` | JWT |
+| GET | `/doacoes`, `/doacoes/:id` | JWT |
+| GET | `/doacoes/minhas` | Doador/Admin |
+| POST | `/doacoes` | Doador/Admin |
+| PUT/DELETE | `/doacoes/:id` | Doador proprietário/Admin |
+| POST | `/reservas/:id` | Instituição |
+| GET | `/reservas/minhas` | Instituição/Admin |
+| GET | `/usuarios` | Admin |
+| PUT | `/usuarios/:id/nivel` | Admin |
+
+### Exemplo de autenticação
+Login:
+```http
+POST /auth/login
+Content-Type: application/json
+
+{"email":"conta@exemplo.com","senha":"senha-com-8-caracteres"}
+```
+A resposta contém `token` e dados públicos do usuário. Para uma rota protegida:
+```http
+Authorization: Bearer SEU_TOKEN
+```
 
 ## Testes
-
 ```bash
 npm test
 ```
+Os testes automatizados existentes cobrem validações e formatação sem precisar conectar ao banco. Os testes de integração completos devem ser executados com MySQL e API ligados; siga `docs/ENTREGA_3.md` e `docs/ENTREGA_4.md`.
 
-Cobre as regras de validação da API e os formatadores do app. Não precisa de banco nem de internet.
+## APK Android
+O projeto contém `eas.json` com perfil `preview` configurado para gerar APK. Depois de configurar uma conta Expo/EAS e validar o app:
 
-## Tipos de usuário (planejados)
+```bash
+npx eas-cli login
+npx eas-cli build:configure
+npx eas-cli build --platform android --profile preview
+```
+Ao final, o EAS fornece o link do APK. O APK precisa ser gerado após configurar o endereço público/ acessível da API. `localhost` e `10.0.2.2` não funcionam em um celular instalado fora do computador.
 
-| Nível | Pode |
-|---|---|
-| **Doador** | Criar, editar e cancelar as próprias ofertas |
-| **Instituição** | Ver ofertas e reservar doações |
-| **Administrador** | Gerenciar usuários e moderar ofertas |
-
-Detalhes e matriz de permissões em [`docs/ENTREGA_2.md`](docs/ENTREGA_2.md#5-níveis-de-usuário-e-permissões-previstas).
-
-## Tecnologias
-
-React Native · Expo · React Navigation · Node.js · Express · MySQL (`mysql2`). Previstas para a Entrega 3: JWT e bcrypt.
-
-## Segurança do repositório
-
-Senhas, `JWT_SECRET` e arquivos `.env` **não** são versionados (ver `.gitignore`); só os modelos `.env.example`. Os usuários de exemplo do SQL não têm senha utilizável.
-
-## Referência técnica
-
-O projeto-modelo *loja-jwt* (usado em aula) serve como apoio para a organização da API e, depois, para autenticação e níveis de acesso. O domínio do Mesa Cheia (doações, reservas e três níveis de usuário) é próprio.
+## Segurança
+- Não versionar `.env`, JWT secret, senhas reais, certificados ou chaves de assinatura.
+- Senhas nunca são retornadas pela API.
+- Consultas usam parâmetros SQL.
+- JWT expira em 8 horas.
+- A API confere o nível e a propriedade da doação no servidor.

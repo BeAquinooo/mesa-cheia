@@ -1,12 +1,13 @@
 import { Router } from 'express';
-import { listarDoacoes, buscarDoacaoPorId, cadastrarDoacao } from '../controllers/doacoesController.js';
+import { listarDoacoes, buscarDoacaoPorId, cadastrarDoacao, atualizarDoacao, cancelarDoacao, minhasDoacoes } from '../controllers/doacoesController.js';
+import { autenticarToken, permitirNiveis } from '../middleware/auth.js';
 
 const router = Router();
-
-// Entrega 2: rotas ainda abertas. Na Entrega 3 entram autenticarToken (JWT) e as permissões por nível:
-// GET para qualquer usuário logado; POST/PUT/DELETE somente doador (dono) ou admin.
+router.use(autenticarToken);
 router.get('/', listarDoacoes);
+router.get('/minhas', permitirNiveis('doador', 'admin'), minhasDoacoes);
 router.get('/:id', buscarDoacaoPorId);
-router.post('/', cadastrarDoacao);
-
+router.post('/', permitirNiveis('doador', 'admin'), cadastrarDoacao);
+router.put('/:id', permitirNiveis('doador', 'admin'), atualizarDoacao);
+router.delete('/:id', permitirNiveis('doador', 'admin'), cancelarDoacao);
 export default router;

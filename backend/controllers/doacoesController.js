@@ -55,7 +55,7 @@ export async function buscarDoacaoPorId(req, res) {
 
 // POST /doacoes
 export async function cadastrarDoacao(req, res) {
-  const { erro, dados } = validarNovaDoacao(req.body);
+  const { erro, dados } = validarNovaDoacao({ ...req.body, doador_id: req.usuario.id });
   if (erro) {
     return res.status(400).json({ mensagem: erro });
   }
@@ -79,4 +79,55 @@ export async function cadastrarDoacao(req, res) {
     }
     return res.status(500).json({ mensagem: 'Não foi possível cadastrar a doação.' });
   }
+}
+
+
+// PUT /doacoes/:id — dono da oferta ou administrador.
+export async function atualizarDoacao(req, res) {
+  if (!idValido(req.params.id)) return res.status(400).json({ mensagem: 'ID da doação inválido.' });
+  const { erro, dados } = validarNovaDoacao({ ...req.body, doador_id: req.usuario.id });
+  if (erro) return res.status(400).json({ mensagem: erro });
+  try {
+    const [existente] = await pool.execute('SELECT id, doador_id, status FROM doacoes WHERE id = ?', [Number(req.params.id)]);
+    if (!existente.length) return res.status(404).json({ mensagem: 'Doação não encontrada.' });
+    if (req.usuario.nivel !== 'admin' && existente[0].doador_id !== req.usuario.id) {
+      return res.status(403).json({ mensagem: 'Você só pode editar suas próprias doações.' });
+    }
+    if (existente[0].status === 'retirada' || existente[0].status === 'cancelada') {
+      return res.status(409).json({ mensagem: 'Esta doação não pode mais ser editada.' });
+    }
+    await pool.execute(
+      `UPDATE doacoes SET categoria_id=?, titulo=?, descricao=?, quantidade=?, refeicoes=?, validade=?,
+       local_retirada=?, retirada_inicio=?, retirada_fim=? WHERE id=?`,
+      [dados.categoria_id, dados.titulo, dados.descricao, dados.quantidade, dados.refeicoes, dados.validade,
+       dados.local_retirada, dados.retirada_inicio, dados.retirada_fim, Number(req.params.id)],
+    );
+    return res.json({ mensagem: 'Doação atualizada com sucesso.' });
+  } catch { return res.status(500).json({ mensagem: 'Não foi possível atualizar a doação.' }); }
+}
+
+// DELETE /doacoes/:id — cancelamento lógico para preservar o histórico.
+export async function cancelarDoacao(req, res) {
+  if (!idValido(req.params.id)) return res.status(400).json({ mensagem: 'ID da doação inválido.' });
+  try {
+    const [rows] = await pool.execute('SELECT id, doador_id, status FROM doacoes WHERE id = ?', [Number(req.params.id)]);
+    if (!rows.length) return res.status(404).json({ mensagem: 'Doação não encontrada.' });
+    if (req.usuario.nivel !== 'admin' && rows[0].doador_id !== req.usuario.id) {
+      return res.status(403).json({ mensagem: 'Você só pode cancelar suas próprias doações.' });
+    }
+    if (rows[0].status === 'retirada') return res.status(409).json({ mensagem: 'Uma doação retirada não pode ser cancelada.' });
+    await pool.execute("UPDATE doacoes SET status = 'cancelada' WHERE id = ?", [Number(req.params.id)]);
+    return res.json({ mensagem: 'Doação cancelada com sucesso.' });
+  } catch { return res.status(500).json({ mensagem: 'Não foi possível cancelar a doação.' }); }
+}
+
+// Lista de ofertas do próprio doador (ou todas para administração).
+export async function minhasDoacoes(req, res) {
+  try {
+    const [rows] = await pool.execute(
+      SELECT_DOACAO + (req.usuario.nivel === 'admin' ? '' : ' WHERE d.doador_id = ?') + ' ORDER BY d.criado_em DESC',
+      req.usuario.nivel === 'admin' ? [] : [req.usuario.id],
+    );
+    return res.json(rows);
+  } catch { return res.status(500).json({ mensagem: 'Não foi possível listar suas doações.' }); }
 }

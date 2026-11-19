@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Botao, Carregando, Cartao, Erro, Selo, estilos } from '../components/ui.js';
 import { cores } from '../constants/tema.js';
 import useCarregar from '../hooks/useCarregar.js';
-import { listarCategorias, listarDoacoes } from '../services/api.js';
+import { listarCategorias, listarDoacoes, carregarSessao } from '../services/api.js';
 import { formatarRetirada, rotuloValidade } from '../utils/formatar.js';
 
 // Definida fora do componente para ser estável (o hook só recarrega quando a tela ganha foco).
@@ -15,6 +15,8 @@ async function buscarTudo() {
 export default function Doacoes({ navigation }) {
   const [categoria, setCategoria] = useState('Todas');
   const { dados, erro, carregando, recarregar } = useCarregar(buscarTudo);
+  const [sessao,setSessao]=useState(null);
+  useEffect(()=>{carregarSessao().then(setSessao);},[]);
 
   if (carregando && !dados) { return <Carregando mensagem="Buscando doações…" />; }
   if (erro && !dados) {
@@ -29,7 +31,7 @@ export default function Doacoes({ navigation }) {
   function renderizarCabecalho() {
     return (
       <View style={local.cabecalho}>
-        <Botao titulo="＋ Publicar doação" onPress={function publicar() { navigation.navigate('NovaDoacao'); }} />
+        {sessao?.usuario?.nivel === 'doador' || sessao?.usuario?.nivel === 'admin' ? <Botao titulo="＋ Publicar doação" onPress={function publicar() { navigation.navigate('NovaDoacao'); }} /> : null}
         {erro ? <Erro mensagem={erro} aoTentar={recarregar} /> : null}
         <View style={local.filtros}>
           {nomes.map(function filtro(nome) {

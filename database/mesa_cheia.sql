@@ -10,7 +10,7 @@ USE mesa_cheia;
 
 -- ---------------------------------------------------------------------------
 -- USUARIOS: quem usa o aplicativo. O nível define o que a pessoa pode fazer.
--- A autenticação (cadastro, login, JWT) entra na Entrega 3; a tabela já nasce pronta.
+-- A autenticação usa bcrypt e JWT; senha_hash armazena apenas o hash.
 -- senha_hash guardará o hash do bcrypt, nunca a senha em texto.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS usuarios (

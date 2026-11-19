@@ -18,6 +18,7 @@ export default function BoasVindas({ navigation }) {
 
       <View style={local.botoes}>
         <Botao titulo="Entrar" onPress={function irEntrar() { navigation.navigate('Entrar'); }} />
+        <Botao titulo="Criar conta" variante="secundario" onPress={function irCadastro() { navigation.navigate('Cadastro'); }} />
         <Botao titulo="Como funciona" variante="secundario"
           onPress={function irComoFunciona() { navigation.navigate('ComoFunciona'); }} />
       </View>

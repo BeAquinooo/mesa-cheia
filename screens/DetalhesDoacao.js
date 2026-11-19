@@ -3,7 +3,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Botao, Carregando, Cartao, Erro, Pagina, Selo, estilos } from '../components/ui.js';
 import { cores } from '../constants/tema.js';
 import useCarregar from '../hooks/useCarregar.js';
-import { buscarDoacao } from '../services/api.js';
+import { buscarDoacao, carregarSessao, reservarDoacao, cancelarDoacao } from '../services/api.js';
+import { useEffect, useState } from 'react';
+import { Alert } from 'react-native';
 import { formatarData, formatarRetirada } from '../utils/formatar.js';
 
 function Linha({ rotulo, valor }) {
@@ -19,6 +21,10 @@ export default function DetalhesDoacao({ route, navigation }) {
   const id = route.params?.id;
   const buscar = useCallback(function buscarDestaDoacao() { return buscarDoacao(id); }, [id]);
   const { dados: doacao, erro, carregando, recarregar } = useCarregar(buscar);
+  const [sessao,setSessao]=useState(null);
+  useEffect(()=>{carregarSessao().then(setSessao);},[]);
+  async function reservar(){try{await reservarDoacao(id);Alert.alert('Sucesso','Doação reservada.');recarregar();}catch(e){Alert.alert('Erro',e.message);}}
+  async function cancelar(){Alert.alert('Cancelar doação','Deseja cancelar esta oferta?',[{text:'Voltar',style:'cancel'},{text:'Confirmar',style:'destructive',onPress:async()=>{try{await cancelarDoacao(id);navigation.goBack();}catch(e){Alert.alert('Erro',e.message);}}}]);}
 
   if (carregando && !doacao) { return <Carregando mensagem="Carregando doação…" />; }
   if (erro) {
@@ -46,10 +52,11 @@ export default function DetalhesDoacao({ route, navigation }) {
         <Linha rotulo="Situação" valor={doacao.status} />
       </Cartao>
 
-      {/* Reservar será implementado na Entrega 3, junto com login e níveis de usuário. */}
-      <View style={local.aviso}>
-        <Text style={local.avisoTexto}>A reserva de doações estará disponível em uma próxima entrega.</Text>
-      </View>
+      {sessao?.usuario?.nivel === 'instituicao' && doacao.status === 'disponivel' ? <Botao titulo="Reservar esta doação" onPress={reservar}/> : null}
+      {(sessao?.usuario?.nivel === 'admin' || (sessao?.usuario?.nivel === 'doador' && sessao.usuario.id === doacao.doador_id)) ?
+        <Botao titulo="Editar doação" variante="secundario" onPress={()=>navigation.navigate('EditarDoacao',{doacao})}/> : null}
+      {(sessao?.usuario?.nivel === 'admin' || (sessao?.usuario?.nivel === 'doador' && sessao.usuario.id === doacao.doador_id)) && doacao.status !== 'cancelada' ?
+        <Botao titulo="Cancelar doação" variante="secundario" onPress={cancelar}/> : null}
       <Botao titulo="Voltar para a lista" variante="secundario" onPress={function voltar() { navigation.goBack(); }} />
     </Pagina>
   );
