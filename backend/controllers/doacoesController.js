@@ -116,6 +116,7 @@ export async function cancelarDoacao(req, res) {
       return res.status(403).json({ mensagem: 'Você só pode cancelar suas próprias doações.' });
     }
     if (rows[0].status === 'retirada') return res.status(409).json({ mensagem: 'Uma doação retirada não pode ser cancelada.' });
+    await pool.execute("UPDATE reservas SET status = 'cancelada' WHERE doacao_id = ? AND status IN ('pendente', 'confirmada')", [Number(req.params.id)]);
     await pool.execute("UPDATE doacoes SET status = 'cancelada' WHERE id = ?", [Number(req.params.id)]);
     return res.json({ mensagem: 'Doação cancelada com sucesso.' });
   } catch { return res.status(500).json({ mensagem: 'Não foi possível cancelar a doação.' }); }
