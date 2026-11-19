@@ -6,8 +6,7 @@ import useCarregar from '../hooks/useCarregar.js';
 import { cadastrarDoacao, listarCategorias } from '../services/api.js';
 import { hojeISO } from '../utils/formatar.js';
 
-// A API exige JWT e nível doador/admin. O ID do doador vem do token no back-end. //
-// ficará disponível só para o nível "doador" e o doador virá do JWT, não do formulário.
+// A API exige JWT e nível doador/admin. O ID do doador vem do token no back-end.
 export default function NovaDoacao({ navigation }) {
   const categorias = useCarregar(listarCategorias);
 
